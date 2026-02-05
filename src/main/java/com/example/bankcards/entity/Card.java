@@ -21,20 +21,17 @@ public class Card {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "card_number_encrypted", nullable = false, unique = true)
-    private String cardNumberEncrypted;
+    @Column(name = "card_hash", nullable = false, unique = true)
+    private String cardHash;
 
-    @Column(name = "card_number_masked", nullable = false, length = 19)
-    private String cardNumberMasked; // Формат: **** **** **** 1234
+    @Column(name = "last_four_digits", nullable = false, length = 19)
+    private String lastFourDigits; // Формат: **** **** **** 1234
 
-    @Column(name = "card_holder_name", nullable = false, length = 100)
-    private String cardHolderName;
+    @Column(name = "card_holder", nullable = false, length = 100)
+    private String cardHolder;
 
-    @Column(name = "expiration_date", nullable = false)
-    private LocalDate expirationDate;
-
-    @Column(name = "cvv_encrypted", nullable = false)
-    private String cvvEncrypted;
+    @Column(name = "expiry_date", nullable = false)
+    private LocalDate expiryDate;
 
     @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
@@ -69,7 +66,7 @@ public class Card {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
 
-        if (expirationDate.isBefore(LocalDate.now())) {
+        if (expiryDate.isBefore(LocalDate.now())) {
             status = CardStatus.EXPIRED;
         }
     }
