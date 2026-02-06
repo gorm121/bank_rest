@@ -2,6 +2,7 @@ package com.example.bankcards.service;
 
 
 
+import com.example.bankcards.exception.InvalidDataException;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -62,14 +63,19 @@ public class RsaService {
         return keyPairGenerator.generateKeyPair();
     }
 
-    public String decrypt(String encryptedBase64) throws Exception {
-        byte[] encrypted = Base64.getDecoder().decode(encryptedBase64);
+    public String decrypt(String encryptedBase64) {
+        try{
+            byte[] encrypted = Base64.getDecoder().decode(encryptedBase64);
 
-        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        cipher.init(Cipher.DECRYPT_MODE, privateKey);
+            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            cipher.init(Cipher.DECRYPT_MODE, privateKey);
 
-        byte[] decrypted = cipher.doFinal(encrypted);
-        return new String(decrypted);
+            byte[] decrypted = cipher.doFinal(encrypted);
+            return new String(decrypted);
+        }catch(Exception e){
+            throw new InvalidDataException("Error while trying to decrypt RSA encrypted data.");
+        }
+
     }
 
 

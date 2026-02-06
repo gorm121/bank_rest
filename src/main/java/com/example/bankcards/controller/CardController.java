@@ -1,9 +1,10 @@
 package com.example.bankcards.controller;
 
-import com.example.bankcards.dto.request.CardDto;
+import com.example.bankcards.dto.CardDto;
 import com.example.bankcards.dto.request.CreateCardRequest;
+import com.example.bankcards.dto.request.TransferRequest;
 import com.example.bankcards.dto.request.UpdateCardRequest;
-import com.example.bankcards.dto.response.MessageDto;
+import com.example.bankcards.dto.MessageDto;
 import com.example.bankcards.service.CardService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +47,8 @@ public class CardController {
         return ResponseEntity.ok(cardService.updateCard(userDetails, id, request));
     }
 
-//    @PostMapping("/transaction")
-//    public ResponseEntity<MessageDto>
+    @PostMapping("/transaction")
+    public ResponseEntity<MessageDto> transfer(@AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody TransferRequest request) {
+        return ResponseEntity.status(201).body(cardService.transfer(userDetails, request));
+    }
 }

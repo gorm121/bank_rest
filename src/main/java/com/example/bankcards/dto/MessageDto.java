@@ -1,4 +1,4 @@
-package com.example.bankcards.dto.response;
+package com.example.bankcards.dto;
 
 import lombok.*;
 

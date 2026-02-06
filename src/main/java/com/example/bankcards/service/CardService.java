@@ -1,22 +1,23 @@
 package com.example.bankcards.service;
 
-import com.example.bankcards.dto.request.CardDto;
+import com.example.bankcards.dto.CardDto;
 import com.example.bankcards.dto.request.CreateCardRequest;
 import com.example.bankcards.dto.request.TransferRequest;
 import com.example.bankcards.dto.request.UpdateCardRequest;
-import com.example.bankcards.dto.response.MessageDto;
+import com.example.bankcards.dto.MessageDto;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.User;
 import com.example.bankcards.enums.UserRole;
 import com.example.bankcards.exception.AccessDeniedException;
 import com.example.bankcards.exception.EntityNotFoundException;
+import com.example.bankcards.exception.InsufficientFundsException;
+import com.example.bankcards.exception.InvalidDataException;
 import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.repository.UserRepository;
 import com.example.bankcards.util.CardValidator;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.BadRequestException;
-import org.hibernate.service.spi.ServiceException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,7 +28,6 @@ import java.math.BigDecimal;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
@@ -51,42 +51,36 @@ public class CardService {
     public CardDto createCard(UserDetails userDetails, CreateCardRequest request) {
         User user = getCurrentUser(userDetails);
 
-        try {
-            String decryptedCardNumber = rsaService.decrypt(request.getEncryptedCardNumber());
+        String decryptedCardNumber = rsaService.decrypt(request.getEncryptedCardNumber());
 
-            String cleanCardNumber = decryptedCardNumber.replaceAll("\\s", "");
+        String cleanCardNumber = decryptedCardNumber.replaceAll("\\s", "");
 
-            if (!isValidCardNumber(cleanCardNumber)) {
-                throw new BadRequestException("Invalid card number");
-            }
-
-            String cardHash = generateCardHash(cleanCardNumber);
-            String lastFourDigits = cleanCardNumber.substring(cleanCardNumber.length() - 4);
-
-            if (cardRepository.existsByCardHash(cardHash)) {
-                throw new BadRequestException("Card already exists");
-            }
-
-            String normalizedHolder = request.getCardHolder()
-                    .trim()
-                    .replaceAll("\\s+", " ")
-                    .toUpperCase();
-
-            Card card = new Card();
-            card.setCardHash(cardHash);
-            card.setLastFourDigits(lastFourDigits);
-            card.setCardHolder(normalizedHolder);
-            card.setExpiryDate(request.getExpiryDate());
-            card.setUser(user);
-
-            Card savedCard = cardRepository.save(card);
-
-            return mapToDto(savedCard);
-
-        } catch (Exception e) {
-            log.error("Failed to create card", e);
-            throw new ServiceException("Failed to process card", e);
+        if (!isValidCardNumber(cleanCardNumber)) {
+            throw new InvalidDataException("Invalid card number");
         }
+
+        String cardHash = generateCardHash(cleanCardNumber);
+        String lastFourDigits = cleanCardNumber.substring(cleanCardNumber.length() - 4);
+
+        if (cardRepository.existsByCardHash(cardHash)) {
+            throw new InvalidDataException("Card already exists");
+        }
+
+        String normalizedHolder = request.getCardHolder()
+                .trim()
+                .replaceAll("\\s+", " ")
+                .toUpperCase();
+
+        Card card = new Card();
+        card.setCardHash(cardHash);
+        card.setLastFourDigits(lastFourDigits);
+        card.setCardHolder(normalizedHolder);
+        card.setExpiryDate(request.getExpiryDate());
+        card.setUser(user);
+
+        Card savedCard = cardRepository.save(card);
+
+        return mapToDto(savedCard);
     }
 
     public List<CardDto> getMyCards(UserDetails userDetails) {
@@ -144,6 +138,7 @@ public class CardService {
         return mapToDto(card);
     }
 
+    @Transactional
     public MessageDto transfer(UserDetails userDetails, TransferRequest request) {
         User user = getCurrentUser(userDetails);
         Long fromCardId = request.getFromCardId();
@@ -154,11 +149,26 @@ public class CardService {
                 && cardRepository.existsByIdAndUserId(toCardId, userId);
 
         if (!hasAccess) {
-//            throw new BadRequestException("Bad request");
+            throw new InsufficientFundsException("Access denied");
         }
 
+        Card fromCard = cardRepository.findById(fromCardId)
+                .orElseThrow(() -> new EntityNotFoundException("Card not found"));
+        Card toCard = cardRepository.findById(toCardId)
+                .orElseThrow(() -> new EntityNotFoundException("Card not found"));
+
+
         BigDecimal amount = request.getAmount();
-        return null;
+        BigDecimal remaining = fromCard.getBalance().subtract(amount);
+
+        if (remaining.compareTo(BigDecimal.ZERO) < 0) {
+            throw new InsufficientFundsException("Not enough money");
+        }
+
+        fromCard.setBalance(fromCard.getBalance().subtract(amount));
+        toCard.setBalance(toCard.getBalance().add(amount));
+
+        return new MessageDto("Transfer successfully");
     }
 
 

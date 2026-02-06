@@ -1,4 +1,4 @@
-package com.example.bankcards.dto.request;
+package com.example.bankcards.dto;
 
 import com.example.bankcards.entity.Card;
 import lombok.*;
