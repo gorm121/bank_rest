@@ -6,17 +6,20 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import lombok.experimental.FieldDefaults;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class LoginRequest {
 
     @NotNull @NotBlank
     @Schema(example = "user@example.com")
-    private String email;
+    String email;
 
     @NotNull @NotBlank
-    private String password;
+    String password;
 }

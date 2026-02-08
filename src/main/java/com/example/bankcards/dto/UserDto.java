@@ -1,5 +1,6 @@
 package com.example.bankcards.dto;
 
+import com.example.bankcards.enums.UserRole;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -9,6 +10,10 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class MessageDto {
-    String message;
+public class UserDto {
+    Long id;
+    String username;
+    String email;
+    String cardHolder;
+    UserRole role;
 }

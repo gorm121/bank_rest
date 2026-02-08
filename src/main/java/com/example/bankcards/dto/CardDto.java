@@ -1,6 +1,7 @@
 package com.example.bankcards.dto;
 
 import com.example.bankcards.entity.Card;
+import com.example.bankcards.enums.CardStatus;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -18,7 +19,7 @@ public class CardDto {
     private String cardHolder;
     private LocalDate expiryDate;
     private BigDecimal balance;
-    private Card.CardStatus status;
+    private CardStatus status;
     private LocalDateTime createdAt;
 
 }

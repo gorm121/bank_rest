@@ -1,7 +1,7 @@
 package com.example.bankcards.controller;
 
 import com.example.bankcards.dto.UserDto;
-import com.example.bankcards.enums.UserRole;
+import com.example.bankcards.entity.User;
 import com.example.bankcards.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +30,7 @@ public class AdminUserController {
 
     @PutMapping("/{userId}/role")
     public ResponseEntity<UserDto> changeUserRole(@PathVariable Long userId,
-                                                  @RequestParam UserRole role) {
+                                                  @RequestParam User.UserRole role) {
         return ResponseEntity.ok(userService.changeUserRole(userId, role));
     }
 

@@ -1,35 +1,45 @@
 package com.example.bankcards.service;
 
 import com.example.bankcards.dto.CardDto;
+import com.example.bankcards.dto.TransactionDto;
 import com.example.bankcards.dto.request.CreateCardRequest;
 import com.example.bankcards.dto.request.TransferRequest;
 import com.example.bankcards.dto.request.UpdateCardRequest;
 import com.example.bankcards.dto.MessageDto;
 import com.example.bankcards.entity.Card;
+import com.example.bankcards.entity.Transaction;
 import com.example.bankcards.entity.User;
+import com.example.bankcards.enums.CardStatus;
 import com.example.bankcards.enums.UserRole;
 import com.example.bankcards.exception.AccessDeniedException;
 import com.example.bankcards.exception.EntityNotFoundException;
 import com.example.bankcards.exception.InsufficientFundsException;
 import com.example.bankcards.exception.InvalidDataException;
 import com.example.bankcards.repository.CardRepository;
+import com.example.bankcards.repository.TransactionRepository;
 import com.example.bankcards.repository.UserRepository;
 import com.example.bankcards.util.CardValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +50,7 @@ public class CardService {
     private final CardRepository cardRepository;
     private final RsaService rsaService;
     private final CardValidator cardValidator;
+    private final TransactionRepository transactionRepository;
 
     @Value("${app.card.hash.salt}")
     private String cardHashSalt;
@@ -48,11 +59,11 @@ public class CardService {
     private String hashAlgorithm;
 
 
+    @Transactional
     public CardDto createCard(UserDetails userDetails, CreateCardRequest request) {
         User user = getCurrentUser(userDetails);
 
         String decryptedCardNumber = rsaService.decrypt(request.getEncryptedCardNumber());
-
         String cleanCardNumber = decryptedCardNumber.replaceAll("\\s", "");
 
         if (!isValidCardNumber(cleanCardNumber)) {
@@ -85,9 +96,7 @@ public class CardService {
 
     public List<CardDto> getMyCards(UserDetails userDetails) {
         User user = getCurrentUser(userDetails);
-
         List<Card> cards = cardRepository.findAllByUser(user);
-
         return cards.stream().map(this::mapToDto).toList();
 
     }
@@ -168,10 +177,76 @@ public class CardService {
         fromCard.setBalance(fromCard.getBalance().subtract(amount));
         toCard.setBalance(toCard.getBalance().add(amount));
 
+        Transaction transaction = new Transaction();
+        transaction.setFromCard(fromCard);
+        transaction.setToCard(toCard);
+        transaction.setAmount(amount);
+        transaction.setStatus(Transaction.TransactionStatus.COMPLETED);
+        transaction.setType(Transaction.TransactionType.TRANSFER);
+        transaction.setDescription(String.format("Transfer from %s to %s, amount %s", fromCard.getCardHolder(), toCard.getCardHolder(), amount.toString()));
+
+        fromCard.addOutgoingTransaction(transaction);
+        toCard.addIncomingTransaction(transaction);
+
         return new MessageDto("Transfer successfully");
     }
 
+    //-------------------------------
+    //Admins methods
 
+    public Page<CardDto> getAllCards(Long userId, CardStatus status, Pageable pageable) {
+        Page<Card> cards;
+
+        if (userId != null && status != null) {
+            cards = cardRepository.findByUserIdAndStatus(userId, status, pageable);
+        } else if (userId != null) {
+            cards = cardRepository.findByUserId(userId, pageable);
+        } else if (status != null) {
+            cards = cardRepository.findByStatus(status, pageable);
+        } else {
+            cards = cardRepository.findAll(pageable);
+        }
+
+        return cards.map(this::mapToDto);
+    }
+
+    public CardDto blockCard(@PathVariable Long cardId){
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new EntityNotFoundException("Card not found"));
+
+        card.setStatus(CardStatus.BLOCKED);
+        cardRepository.save(card);
+        return mapToDto(card);
+    }
+
+    public CardDto activateCard(Long cardId) {
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new EntityNotFoundException("Card not found"));
+
+        card.setStatus(CardStatus.ACTIVE);
+        cardRepository.save(card);
+        return mapToDto(card);
+    }
+
+    public MessageDto deleteCard(Long cardId){
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new EntityNotFoundException("Card not found"));
+        cardRepository.delete(card);
+        return new MessageDto("Card deleted successfully");
+    }
+
+    public List<TransactionDto> getCardTransactions(Long cardId){
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new EntityNotFoundException("Card not found"));
+        return Stream.concat(
+                        card.getIncomingTransactions().stream(),
+                        card.getOutgoingTransactions().stream()
+                )
+                .distinct()
+                .sorted(Comparator.comparing(Transaction::getCreatedAt).reversed())
+                .map(this::mapToDto)
+                .toList();
+    }
 
 
     private User getCurrentUser(UserDetails userDetails) {
@@ -217,6 +292,20 @@ public class CardService {
         dto.setBalance(card.getBalance());
         dto.setStatus(card.getStatus());
         dto.setCreatedAt(card.getCreatedAt());
+        return dto;
+    }
+
+    private TransactionDto mapToDto(Transaction transaction) {
+        TransactionDto dto = new TransactionDto();
+        dto.setId(transaction.getId());
+        dto.setTransactionId(transaction.getTransactionId());
+        dto.setToCard(transaction.getToCard());
+        dto.setFromCard(transaction.getFromCard());
+        dto.setDescription(transaction.getDescription());
+        dto.setAmount(transaction.getAmount());
+        dto.setType(transaction.getType());
+        dto.setCreatedAt(transaction.getCreatedAt());
+        dto.setStatus(transaction.getStatus());
         return dto;
     }
 }

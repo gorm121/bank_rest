@@ -1,12 +1,15 @@
 package com.example.bankcards.entity;
 
 
+import com.example.bankcards.enums.CardStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -51,10 +54,10 @@ public class Card {
     private User user;
 
     @OneToMany(mappedBy = "fromCard", fetch = FetchType.LAZY)
-    private Set<Transaction> outgoingTransactions;
+    private List<Transaction> outgoingTransactions = new ArrayList<>();
 
     @OneToMany(mappedBy = "toCard", fetch = FetchType.LAZY)
-    private Set<Transaction> incomingTransactions;
+    private List<Transaction> incomingTransactions = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
@@ -71,7 +74,11 @@ public class Card {
         }
     }
 
-    public enum CardStatus {
-        ACTIVE, BLOCKED, EXPIRED
+    public void addOutgoingTransaction(Transaction transaction) {
+        outgoingTransactions.add(transaction);
+    }
+
+    public void addIncomingTransaction(Transaction transaction) {
+        incomingTransactions.add(transaction);
     }
 }

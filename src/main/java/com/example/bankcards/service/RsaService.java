@@ -4,15 +4,20 @@ package com.example.bankcards.service;
 
 import com.example.bankcards.exception.InvalidDataException;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
 import javax.crypto.Cipher;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
 @Service
+@Slf4j
 public class RsaService {
 
     @Value("${app.rsa.private-key:}")
@@ -26,23 +31,14 @@ public class RsaService {
 
     @PostConstruct
     public void init() throws Exception {
-        if (privateKeyBase64 != null && !privateKeyBase64.isEmpty() &&
-                publicKeyBase64 != null && !publicKeyBase64.isEmpty()) {
+        if (StringUtils.hasText(privateKeyBase64) && StringUtils.hasText(publicKeyBase64)) {
             loadKeysFromConfig();
         } else {
-            generateAndSaveKeys();
+            log.error("Private key or public key could not be loaded");
+            throw new RuntimeException("Keys for RSA are not initialized");
         }
     }
 
-    private void generateAndSaveKeys() throws Exception {
-        KeyPair keyPair = generateKeyPair();
-        this.privateKey = keyPair.getPrivate();
-        this.publicKey = keyPair.getPublic();
-
-        System.out.println("Generated new RSA keys. Add to application.properties:");
-        System.out.println("app.rsa.public-key=" + Base64.getEncoder().encodeToString(publicKey.getEncoded()));
-        System.out.println("app.rsa.private-key=" + Base64.getEncoder().encodeToString(privateKey.getEncoded()));
-    }
 
     private void loadKeysFromConfig() throws Exception {
         byte[] publicBytes = Base64.getDecoder().decode(publicKeyBase64);
@@ -67,17 +63,16 @@ public class RsaService {
         try{
             byte[] encrypted = Base64.getDecoder().decode(encryptedBase64);
 
-            Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
             cipher.init(Cipher.DECRYPT_MODE, privateKey);
 
             byte[] decrypted = cipher.doFinal(encrypted);
-            return new String(decrypted);
+            return new String(decrypted, StandardCharsets.UTF_8);
         }catch(Exception e){
             throw new InvalidDataException("Error while trying to decrypt RSA encrypted data.");
         }
 
     }
-
 
     public String getPublicKeyBase64() {
         return Base64.getEncoder().encodeToString(publicKey.getEncoded());
