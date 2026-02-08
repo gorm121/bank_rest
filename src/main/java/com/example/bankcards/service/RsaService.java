@@ -41,8 +41,18 @@ public class RsaService {
 
 
     private void loadKeysFromConfig() throws Exception {
-        byte[] publicBytes = Base64.getDecoder().decode(publicKeyBase64);
-        byte[] privateBytes = Base64.getDecoder().decode(privateKeyBase64);
+        String publicClean = publicKeyBase64
+                .replace("-----BEGIN PUBLIC KEY-----", "")
+                .replace("-----END PUBLIC KEY-----", "")
+                .replaceAll("\\s", "");
+
+        String privateClean = privateKeyBase64
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replaceAll("\\s", "");
+
+        byte[] publicBytes = Base64.getDecoder().decode(publicClean);
+        byte[] privateBytes = Base64.getDecoder().decode(privateClean);
 
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 

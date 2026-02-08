@@ -16,7 +16,5 @@ public class RegisterResponse {
     Long id;
     String username;
     String email;
-    String firstName;
-    String lastName;
     LocalDateTime createdAt;
 }

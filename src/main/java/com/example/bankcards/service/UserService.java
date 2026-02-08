@@ -2,6 +2,7 @@ package com.example.bankcards.service;
 
 import com.example.bankcards.dto.UserDto;
 import com.example.bankcards.entity.User;
+import com.example.bankcards.enums.UserRole;
 import com.example.bankcards.exception.EntityNotFoundException;
 import com.example.bankcards.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,7 @@ public class UserService {
         return matToDto(user);
     }
 
-    public UserDto changeUserRole(Long userId, User.UserRole role) {
+    public UserDto changeUserRole(Long userId, UserRole role) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
         user.setRole(role);
@@ -56,7 +57,6 @@ public class UserService {
         userDto.setId(user.getId());
         userDto.setUsername(user.getUsername());
         userDto.setEmail(user.getEmail());
-        userDto.setCardHolder(user.getCardHolder());
         userDto.setRole(user.getRole());
         return userDto;
     }

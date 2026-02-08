@@ -50,37 +50,35 @@ public class AuthService {
         return RegisterResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
                 .email(user.getEmail())
                 .createdAt(user.getCreatedAt())
                 .build();
     }
 
     public LoginResponse login(LoginRequest request) {
-        String email = request.getEmail();
+        String username = request.getUsername();
         String password = request.getPassword();
 
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> {
-                    log.warn("Login attempt with non-existent email: {}", email);
+                    log.warn("Login attempt with non-existent email: {}", username);
                     return new UsernameNotFoundException("User not found");
                 });
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            log.warn("Failed login attempt: invalid password for email={}", email);
+            log.warn("Failed login attempt: invalid password for email={}", username);
             throw new BadCredentialsException("Invalid email or password");
         }
 
+
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        email, password
+                        username, password
                 )
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         String token = jwtTokenProvider.generateJwtToken(authentication);
-        log.info("User logged in successfully: userId={}, email={}", user.getId(), email);
 
         return LoginResponse.builder()
                 .accessToken(token)

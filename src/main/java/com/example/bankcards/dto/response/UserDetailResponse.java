@@ -17,7 +17,6 @@ public class UserDetailResponse {
     Long id;
     String username;
     String email;
-    String fullName;
     Boolean enabled;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
@@ -26,7 +25,6 @@ public class UserDetailResponse {
         this.id = user.getId();
         this.username = user.getUsername();
         this.email = user.getEmail();
-        this.fullName = user.getCardHolder();
         this.enabled = user.getEnabled();
         this.createdAt = user.getCreatedAt();
         this.updatedAt = user.getUpdatedAt();

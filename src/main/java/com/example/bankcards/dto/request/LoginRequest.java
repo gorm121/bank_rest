@@ -17,8 +17,7 @@ import lombok.experimental.FieldDefaults;
 public class LoginRequest {
 
     @NotNull @NotBlank
-    @Schema(example = "user@example.com")
-    String email;
+    String username;
 
     @NotNull @NotBlank
     String password;

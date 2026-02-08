@@ -29,8 +29,6 @@ public class User {
     @Column(unique = true, nullable = false, length = 100)
     private String email;
 
-    @Column(name = "card_holder", nullable = false, length = 100)
-    private String cardHolder;
 
     @Column(nullable = false)
     private Boolean enabled = true;
