@@ -4,6 +4,7 @@ import com.example.bankcards.entity.User;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -18,8 +19,8 @@ public class UserDetailResponse {
     String username;
     String email;
     Boolean enabled;
-    LocalDateTime createdAt;
-    LocalDateTime updatedAt;
+    LocalDate createdAt;
+    LocalDate updatedAt;
 
     public UserDetailResponse(User user) {
         this.id = user.getId();

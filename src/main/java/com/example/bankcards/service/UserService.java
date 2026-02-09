@@ -6,6 +6,8 @@ import com.example.bankcards.enums.UserRole;
 import com.example.bankcards.exception.EntityNotFoundException;
 import com.example.bankcards.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 
@@ -16,10 +18,9 @@ import java.util.List;
 public class UserService {
     private final UserRepository userRepository;
 
-    public List<UserDto> getAllUsers() {
-        List<User> users = userRepository.findAll();
-        List<UserDto> usersDto = users.stream().map(this::matToDto).toList();
-        return usersDto;
+    public Page<UserDto> getAllUsers(Pageable pageable) {
+        Page<User> users = userRepository.findAll(pageable);
+        return users.map(this::matToDto);
     }
 
     public UserDto getUser(Long userId){

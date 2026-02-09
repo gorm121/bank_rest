@@ -4,6 +4,7 @@ package com.example.bankcards.dto.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -16,5 +17,5 @@ public class RegisterResponse {
     Long id;
     String username;
     String email;
-    LocalDateTime createdAt;
+    LocalDate createdAt;
 }

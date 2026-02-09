@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CardValidator {
 
-    public static boolean luhnCheck(String cardNumber) {
+    public boolean luhnCheck(String cardNumber) {
         if (cardNumber == null || cardNumber.trim().isEmpty()) {
             return false;
         }

@@ -5,13 +5,13 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class LoginResponse {
-    @Schema(description = "JWT Access Token", example = "eyJhbGciOiJIUzI1NiJ9...")
     String accessToken;
     String tokenType = "Bearer";
     UserDetailResponse user;

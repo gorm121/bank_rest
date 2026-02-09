@@ -1,8 +1,6 @@
 package com.example.bankcards.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -25,9 +23,9 @@ public class CreateCardRequest {
     @Pattern(regexp = "^[A-Za-zА-Яа-я\\s-]+$")
     String cardHolder;
 
-    @NotBlank(message = "Expiry date is required")
-    @Pattern(regexp = "^(0[1-9]|1[0-2])/([0-9]{2})$", message = "Expiry date must be in MM/YY format")
-    LocalDate expiryDate;
+    @NotNull(message = "Expiry date is required")
+    @Future(message = "Expiry date must be in the future")
+    private LocalDate expiryDate;
 
     @NotBlank(message = "CVV is required")
     @Size(min = 3, max = 4, message = "CVV must be 3 or 4 digits")

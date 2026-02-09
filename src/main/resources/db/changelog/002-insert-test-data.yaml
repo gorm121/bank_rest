@@ -1,0 +1,91 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-insert-admin-user
+      author: devops
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column: {name: username, value: "admin"}
+              - column: {name: email, value: "admin@bank.com"}
+              - column: {name: password, value: "$2a$10$QH4G05uBIyq6ejLAvpJRpuOq13okbr/JOXmN/t4G8J/uiW0Wi2EiG"} # admin123
+              - column: {name: role, value: "ADMIN"}
+              - column: {name: enabled, valueBoolean: true}
+              - column: { name: created_at, valueDate: "2026-02-09" }
+              - column: { name: updated_at, valueDate: "2026-02-09" }
+        - rollback:
+            delete:
+              tableName: users
+              where: "email='admin@bank.com'"
+
+  - changeSet:
+      id: 002-insert-test-user
+      author: devops
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column: {name: username, value: "testuser"}
+              - column: {name: email, value: "user@bank.com"}
+              - column: {name: password, value: "$2a$10$sIm2.GgeOusieXYZ.bzVWu7oNmn/Zunh0L3kmwaraPkPGyMcmPY7C"} # user123
+              - column: {name: role, value: "USER"}
+              - column: {name: enabled, valueBoolean: true}
+              - column: { name: created_at, valueDate: "2026-02-09" }
+              - column: { name: updated_at, valueDate: "2026-02-09" }
+        - rollback:
+            delete:
+              tableName: users
+              where: "email='user@bank.com'"
+
+  - changeSet:
+      id: 002-insert-test-cards
+      author: devops
+      changes:
+        - sql:
+            sql: |
+              INSERT INTO cards (card_hash, last_four_digits, card_holder, expiry_date, status, balance, user_id, created_at, updated_at)
+              VALUES 
+              -- Карта для админа
+              (
+                'admin_card_hash_1',
+                '**** **** **** 1111',
+                'ADMIN USER',
+                '2026-12-31',
+                'ACTIVE',
+                1000.00,
+                (SELECT id FROM users WHERE email = 'admin@bank.com'),
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+              ),
+              -- Карты для обычного пользователя
+              (
+                'user_card_hash_1',
+                '**** **** **** 2222',
+                'TEST USER',
+                '2025-06-30',
+                'ACTIVE',
+                500.00,
+                (SELECT id FROM users WHERE email = 'user@bank.com'),
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+              ),
+              (
+                'user_card_hash_2',
+                '**** **** **** 3333',
+                'TEST USER',
+                '2024-12-31', -- Просроченная
+                'EXPIRED',
+                100.00,
+                (SELECT id FROM users WHERE email = 'user@bank.com'),
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP
+              );
+        - rollback:
+            sql:
+              sql: |
+                DELETE FROM cards 
+                WHERE card_hash IN (
+                  'admin_card_hash_1',
+                  'user_card_hash_1', 
+                  'user_card_hash_2'
+                );

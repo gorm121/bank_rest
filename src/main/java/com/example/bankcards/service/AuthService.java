@@ -46,13 +46,13 @@ public class AuthService {
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
 
-        userRepository.save(user);
-        log.info("User registered successfully: userId={}, username={}, email={}", user.getId(), username, email);
+        User saved = userRepository.save(user);
+        log.info("User registered successfully: userId={}, username={}, email={}", saved.getId(), username, email);
         return RegisterResponse.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .createdAt(user.getCreatedAt())
+                .id(saved.getId())
+                .username(saved.getUsername())
+                .email(saved.getEmail())
+                .createdAt(saved.getCreatedAt())
                 .build();
     }
 
@@ -89,6 +89,7 @@ public class AuthService {
 
         return LoginResponse.builder()
                 .accessToken(token)
+                .tokenType("Bearer")
                 .user(new UserDetailResponse(user))
                 .build();
     }

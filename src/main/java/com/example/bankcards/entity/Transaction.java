@@ -1,7 +1,11 @@
 package com.example.bankcards.entity;
 
+import com.example.bankcards.enums.TransactionStatus;
+import com.example.bankcards.enums.TransactionType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -14,11 +18,13 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Builder.Default
     @Column(name = "transaction_id", unique = true, nullable = false)
     private UUID transactionId = UUID.randomUUID();
 
@@ -28,6 +34,7 @@ public class Transaction {
     @Column(length = 255)
     private String description;
 
+    @Builder.Default
     @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private TransactionStatus status = TransactionStatus.COMPLETED;
@@ -36,7 +43,8 @@ public class Transaction {
     @Enumerated(EnumType.STRING)
     private TransactionType type;
 
-    @Column(name = "created_at")
+    @CreatedDate
+    @Column(name = "created_at", columnDefinition = "DATE")
     private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -47,19 +55,4 @@ public class Transaction {
     @JoinColumn(name = "to_card_id", nullable = false)
     private Card toCard;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        if (transactionId == null) {
-            transactionId = UUID.randomUUID();
-        }
-    }
-
-    public enum TransactionStatus {
-        COMPLETED, FAILED, PENDING
-    }
-
-    public enum TransactionType {
-        TRANSFER, PAYMENT, REFUND
-    }
 }

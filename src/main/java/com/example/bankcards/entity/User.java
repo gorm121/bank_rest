@@ -3,7 +3,11 @@ package com.example.bankcards.entity;
 import com.example.bankcards.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -15,7 +19,9 @@ import java.util.Set;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -33,28 +39,20 @@ public class User {
     @Column(nullable = false)
     private Boolean enabled = true;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    @CreatedDate
+    @Column(name = "created_at", columnDefinition = "DATE")
+    private LocalDate createdAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @LastModifiedDate
+    @Column(name = "updated_at", columnDefinition = "DATE")
+    private LocalDate updatedAt;
 
+    @Builder.Default
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private UserRole role = UserRole.USER;
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Card> cards = new HashSet<>();
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
 }

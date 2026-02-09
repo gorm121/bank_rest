@@ -10,6 +10,8 @@ import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.Transaction;
 import com.example.bankcards.entity.User;
 import com.example.bankcards.enums.CardStatus;
+import com.example.bankcards.enums.TransactionStatus;
+import com.example.bankcards.enums.TransactionType;
 import com.example.bankcards.enums.UserRole;
 import com.example.bankcards.exception.AccessDeniedException;
 import com.example.bankcards.exception.EntityNotFoundException;
@@ -34,6 +36,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -141,7 +144,6 @@ public class CardService {
                 .toUpperCase();
 
         card.setCardHolder(normalizedHolder);
-        card.setUpdatedAt(LocalDateTime.now());
 
         cardRepository.save(card);
         return mapToDto(card);
@@ -181,8 +183,8 @@ public class CardService {
         transaction.setFromCard(fromCard);
         transaction.setToCard(toCard);
         transaction.setAmount(amount);
-        transaction.setStatus(Transaction.TransactionStatus.COMPLETED);
-        transaction.setType(Transaction.TransactionType.TRANSFER);
+        transaction.setStatus(TransactionStatus.COMPLETED);
+        transaction.setType(TransactionType.TRANSFER);
         transaction.setDescription(String.format("Transfer from %s to %s, amount %s", fromCard.getCardHolder(), toCard.getCardHolder(), amount.toString()));
 
         fromCard.addOutgoingTransaction(transaction);
@@ -218,7 +220,6 @@ public class CardService {
 
 
         card.setStatus(CardStatus.BLOCKED);
-        card.setUpdatedAt(LocalDateTime.now());
         cardRepository.save(card);
 
         log.info("Card blocked by user: cardId={}, userId={}", cardId, user.getId());
@@ -317,7 +318,7 @@ public class CardService {
     }
 
     private boolean isValidCardNumber(String cardNumber) {
-        return CardValidator.luhnCheck(cardNumber);
+        return cardValidator.luhnCheck(cardNumber);
     }
 
     private CardDto mapToDto(Card card) {

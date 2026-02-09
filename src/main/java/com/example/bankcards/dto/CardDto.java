@@ -20,6 +20,5 @@ public class CardDto {
     private LocalDate expiryDate;
     private BigDecimal balance;
     private CardStatus status;
-    private LocalDateTime createdAt;
-
+    private LocalDate createdAt;
 }

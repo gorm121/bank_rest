@@ -1,0 +1,139 @@
+version: '3.8'
+
+services:
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: bank-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bankdb
+      POSTGRES_USER: bankuser
+      POSTGRES_PASSWORD: bankpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - bank-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bankuser -d bankdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bank-app
+    restart: unless-stopped
+    environment:
+
+      SPRING_PROFILES_ACTIVE: docker
+
+
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bankdb
+      SPRING_DATASOURCE_USERNAME: bankuser
+      SPRING_DATASOURCE_PASSWORD: bankpass
+
+
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_JPA_SHOW_SQL: true
+      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: true
+
+
+      SPRING_LIQUIBASE_ENABLED: true
+      SPRING_LIQUIBASE_CHANGE_LOG: classpath:db/changelog/db.changelog-master.yaml
+      SPRING_LIQUIBASE_DROP_FIRST: false
+
+
+      APP_JWTSECRET: f7a8b9c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0
+      APP_JWTEXPIRATIONMS: 86400000
+
+
+      APP_CARD_MASK_PATTERN: "**** **** **** %s"
+      APP_CARD_MASK_VISIBLE_DIGITS: 4
+      APP_CARD_HASH_SALT: 7oaOj1g1AfLbcRJlRhXQbAtYF3Slsqjz
+      APP_CARD_HASH_ALGORITHM: SHA-256
+      APP_CARD_EXPIRATION_MAX_YEARS: 5
+
+
+      APP_PAGINATION_DEFAULT_PAGE_SIZE: 10
+      APP_PAGINATION_MAX_PAGE_SIZE: 50
+
+      APP_TRANSFER_MAX_AMOUNT: 1000000.00
+      APP_TRANSFER_MIN_AMOUNT: 0.01
+
+
+      APP_RSA_PRIVATE_KEY: |
+        MIICdwIBADANBgkqhkiG9w0BAQEFAASCAmEwggJdAgEAAoGBALa2Tojw9/qcS/TC
+        Eiu30O7suq0B/ImOnOy5Dl6ipgp7zyZkmZDfmkVB30PXWl0gFxO4rMBivrktH2jA
+        3BFPK+EYig5G4k/ifSyhP2/tVq1ezL3qfi51k1w7BI34KRjTln0EETxVInM0y3/x
+        7xoxeYL+EGsuWJ/i+I8KxQPsyaFrAgMBAAECgYBoHLnjjmu/ghBGB9AS2UtU2dAF
+        hXxBZeJFga2Of1/d2W7QkcJvqvpdPIvcPHphVkfQFQtbFOlY2z1qk3rS4io9wtPE
+        zQ7iSvona2R4k8oWoa7DVshMAjvNJ4c73eVgH6DstjHsHJIj2EsG30gsyvqTie1L
+        0iVGdxQ3S84AqMO8AQJBAON2elg3DstQq1a+VFbNIbInyDl0xKp/78QW0jR4ParM
+        mQMwClrrWRefBFZtsaUbpocUhH0J9X8+Px+JAdKM4fsCQQDNoo1YfNzh5G1KbD2k
+        jvVT+8tQ3+8YdV/wGSUGXpuCSGFSfj7SFVEacH3zJhHEeUrGY4MatICEAtLhU51B
+        6ZNRAkEA2VFatmlz8wARkwCo53140hN8EpjjRNqSotAC6SpwEH0FO6xsWE0+g3jj
+        1gdbkBmI0snhgu0+5eD8wg5N9XGwfQJBAK8kkzTZ7JvtnfR0arBdHrDwVgRFJvTz
+        C8qI8BMTw2nc0h+b7U+r3k8hnvTY6Ospz7lXipPVR1yotwo52EgKdHECQA3tJaiK
+        oUXv41k9L8XFKoDq7lM+VxzJ+1unBenTsUFjqONpD2f2o4jo5pn9BCuc7sdlGkCJ
+        D0L8Z7lSDfS5ijU=
+      APP_RSA_PUBLIC_KEY: |
+        MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC2tk6I8Pf6nEv0whIrt9Du7Lqt
+        AfyJjpzsuQ5eoqYKe88mZJmQ35pFQd9D11pdIBcTuKzAYr65LR9owNwRTyvhGIoO
+        RuJP4n0soT9v7VatXsy96n4udZNcOwSN+CkY05Z9BBE8VSJzNMt/8e8aMXmC/hBr
+        Llif4viPCsUD7MmhawIDAQAB
+      
+
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:8080
+
+
+      SPRINGDOC_API_DOCS_PATH: /v3/api-docs
+      SPRINGDOC_SWAGGER_UI_PATH: /swagger-ui.html
+      SPRINGDOC_SWAGGER_UI_ENABLED: true
+      SPRINGDOC_SWAGGER_UI_OPERATIONSSORTER: method
+
+
+      LOGGING_LEVEL_COM_BANK: DEBUG
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: INFO
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: INFO
+      LOGGING_LEVEL_ORG_HIBERNATE_SQL: DEBUG
+      LOGGING_LEVEL_ORG_HIBERNATE_TYPE_DESCRIPTOR_SQL_BASICBINDER: TRACE
+      LOGGING_LEVEL_LIQUIBASE: DEBUG
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_BOOT_AUTOCONFIGURE_LIQUIBASE: DEBUG
+
+
+      SERVER_PORT: 8080
+
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - bank-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs:/app/logs
+    command: >
+      sh -c "
+      echo 'Waiting for PostgreSQL...' &&
+      sleep 5 &&
+      java -jar /app/app.jar
+      "
+
+volumes:
+  postgres_data:
+
+networks:
+  bank-network:
+    driver: bridge
