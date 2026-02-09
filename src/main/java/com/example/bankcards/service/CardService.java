@@ -188,8 +188,45 @@ public class CardService {
         fromCard.addOutgoingTransaction(transaction);
         toCard.addIncomingTransaction(transaction);
 
+        cardRepository.save(fromCard);
+        cardRepository.save(toCard);
+
+        transactionRepository.save(transaction);
+
+        log.info("Transfer completed: fromCardId={}, toCardId={}, amount={}",
+                fromCardId, toCardId, amount);
+
+
         return new MessageDto("Transfer successfully");
     }
+
+    public MessageDto requestBlockCard(UserDetails userDetails, Long cardId) {
+        User user = getCurrentUser(userDetails);
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new EntityNotFoundException("Card not found"));
+
+        if (!card.getUser().equals(user)) {
+            throw new AccessDeniedException("Not your card");
+        }
+        if (card.getStatus() == CardStatus.BLOCKED) {
+            throw new InvalidDataException("Card is already blocked");
+        }
+
+        if (card.getStatus() == CardStatus.EXPIRED) {
+            throw new InvalidDataException("Card is expired");
+        }
+
+
+        card.setStatus(CardStatus.BLOCKED);
+        card.setUpdatedAt(LocalDateTime.now());
+        cardRepository.save(card);
+
+        log.info("Card blocked by user: cardId={}, userId={}", cardId, user.getId());
+
+        return new MessageDto("Card blocked successfully");
+    }
+
+
 
     //-------------------------------
     //Admins methods

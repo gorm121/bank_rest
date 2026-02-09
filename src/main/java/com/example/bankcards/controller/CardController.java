@@ -47,6 +47,14 @@ public class CardController {
         return ResponseEntity.ok(cardService.updateCard(userDetails, id, request));
     }
 
+    @PostMapping("/{cardId}/block-request")
+    public ResponseEntity<MessageDto> requestBlockCard(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long cardId) {
+
+        return ResponseEntity.ok(cardService.requestBlockCard(userDetails, cardId));
+    }
+
     @PostMapping("/transaction")
     public ResponseEntity<MessageDto> transfer(@AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody TransferRequest request) {
         return ResponseEntity.status(201).body(cardService.transfer(userDetails, request));
