@@ -8,11 +8,13 @@ import com.example.bankcards.dto.response.LoginResponse;
 import com.example.bankcards.dto.response.RegisterResponse;
 import com.example.bankcards.dto.response.UserDetailResponse;
 import com.example.bankcards.entity.User;
+import com.example.bankcards.exception.UserAlreadyExistsException;
 import com.example.bankcards.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,8 +38,7 @@ public class AuthService {
 
         if (userRepository.existsByUsernameOrEmail(username, email)) {
             log.warn("Registration attempt with existing username or email: username={}, email={}", username, email);
-//            throw new UserAlreadyExistsException("Username or Email already exists");
-            throw new RuntimeException("Username or Email already exists");
+            throw new UserAlreadyExistsException("Username or Email already exists");
         }
 
         User user = new User();
@@ -64,6 +65,12 @@ public class AuthService {
                     log.warn("Login attempt with non-existent email: {}", username);
                     return new UsernameNotFoundException("User not found");
                 });
+
+        if (!Boolean.TRUE.equals(user.getEnabled())) {
+            log.warn("Login attempt for disabled user: {}", username);
+            throw new DisabledException("User account is disabled");
+        }
+
         if (!passwordEncoder.matches(password, user.getPassword())) {
             log.warn("Failed login attempt: invalid password for email={}", username);
             throw new BadCredentialsException("Invalid email or password");
