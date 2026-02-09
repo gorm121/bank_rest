@@ -1,7 +1,7 @@
 package com.example.bankcards.service;
 
 
-import com.example.bankcards.config.JwtTokenProvider;
+
 import com.example.bankcards.dto.request.LoginRequest;
 import com.example.bankcards.dto.request.RegisterRequest;
 import com.example.bankcards.dto.response.LoginResponse;
@@ -10,6 +10,7 @@ import com.example.bankcards.dto.response.UserDetailResponse;
 import com.example.bankcards.entity.User;
 import com.example.bankcards.exception.UserAlreadyExistsException;
 import com.example.bankcards.repository.UserRepository;
+import com.example.bankcards.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;

@@ -1,5 +1,4 @@
-package com.example.bankcards.config;
-
+package com.example.bankcards.security;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
